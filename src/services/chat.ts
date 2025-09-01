@@ -180,7 +180,8 @@ class ChatService {
     const payload = merge(
       {
         model: DEFAULT_AGENT_CONFIG.model,
-        stream: true,
+        // 🔒 streaming tamamen kapalı
+        stream: false,
         ...DEFAULT_AGENT_CONFIG.params,
       },
       params,
@@ -365,12 +366,13 @@ class ChatService {
       ? 'responses'
       : undefined;
 
-    // Get the chat config to check streaming preference
+    // Get the chat config (diğer parametreler için gerekiyor)
     const chatConfig = agentChatConfigSelectors.currentChatConfig(getAgentStoreState());
 
     const payload = merge(
       {
         model: DEFAULT_AGENT_CONFIG.model,
+        // 🔒 streaming tamamen kapalı
         stream: false,
         ...DEFAULT_AGENT_CONFIG.params,
       },
