@@ -371,7 +371,7 @@ class ChatService {
     const payload = merge(
       {
         model: DEFAULT_AGENT_CONFIG.model,
-        stream: chatConfig.enableStreaming !== false, // Default to true if not set
+        stream: false,
         ...DEFAULT_AGENT_CONFIG.params,
       },
       { ...res, apiMode, model },
