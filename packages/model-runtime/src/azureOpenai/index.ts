@@ -1,6 +1,6 @@
 import debug from 'debug';
 import OpenAI, { AzureOpenAI } from 'openai';
-import type { Stream } from 'openai/streaming';
+// NOTE: streaming kapatıldığı için Stream tipi ve debugStream artık gereksiz
 
 import { LobeRuntimeAI } from '../BaseAI';
 import { systemToUserModels } from '../const/models';
@@ -15,13 +15,14 @@ import {
 import { AgentRuntimeErrorType } from '../types/error';
 import { CreateImagePayload, CreateImageResponse } from '../types/image';
 import { AgentRuntimeError } from '../utils/createError';
-import { debugStream } from '../utils/debugStream';
+// import { debugStream } from '../utils/debugStream'; // streaming kapalı
 import { transformResponseToStream } from '../utils/openaiCompatibleFactory';
 import { convertImageUrlToFile, convertOpenAIMessages } from '../utils/openaiHelpers';
 import { StreamingResponse } from '../utils/response';
 import { OpenAIStream } from '../utils/streams';
 
 const azureImageLogger = debug('lobe-image:azure');
+
 export class LobeAzureOpenAI implements LobeRuntimeAI {
   client: AzureOpenAI;
 
@@ -43,8 +44,9 @@ export class LobeAzureOpenAI implements LobeRuntimeAI {
 
   async chat(payload: ChatStreamPayload, options?: ChatMethodOptions) {
     const { messages, model, ...params } = payload;
-    // o1 series models on Azure OpenAI does not support streaming currently
-    const enableStreaming = model.includes('o1') ? false : (params.stream ?? true);
+
+    // Streaming kapalı: her zaman non-stream cevap alacağız
+    const enableStreaming = false;
 
     const updatedMessages = messages.map((message) => ({
       ...message,
@@ -77,29 +79,22 @@ export class LobeAzureOpenAI implements LobeRuntimeAI {
       // Add reasoning_effort only if it exists and cast to proper type
       const openaiParams = compatibleReasoningEffort
         ? {
-            ...baseParams,
-            reasoning_effort: compatibleReasoningEffort as 'low' | 'medium' | 'high',
-          }
+          ...baseParams,
+          reasoning_effort: compatibleReasoningEffort as 'low' | 'medium' | 'high',
+        }
         : baseParams;
 
-      const response = enableStreaming
-        ? await this.client.chat.completions.create({ ...openaiParams, stream: true })
-        : await this.client.chat.completions.create({ ...openaiParams, stream: false });
-      if (enableStreaming) {
-        const stream = response as Stream<OpenAI.ChatCompletionChunk>;
-        const [prod, debug] = stream.tee();
-        if (process.env.DEBUG_AZURE_CHAT_COMPLETION === '1') {
-          debugStream(debug.toReadableStream()).catch(console.error);
-        }
-        return StreamingResponse(OpenAIStream(prod, { callbacks: options?.callback }), {
-          headers: options?.headers,
-        });
-      } else {
-        const stream = transformResponseToStream(response as OpenAI.ChatCompletion);
-        return StreamingResponse(OpenAIStream(stream, { callbacks: options?.callback }), {
-          headers: options?.headers,
-        });
-      }
+      // **Tek tip çağrı**: stream: false
+      const response = await this.client.chat.completions.create({
+        ...openaiParams,
+        stream: false,
+      });
+
+      // Streaming kapalı olduğundan, yanıtı tek seferde stream'e dönüştürüp döndürüyoruz
+      const stream = transformResponseToStream(response as OpenAI.ChatCompletion);
+      return StreamingResponse(OpenAIStream(stream, { callbacks: options?.callback }), {
+        headers: options?.headers,
+      });
     } catch (e) {
       return this.handleError(e, model);
     }

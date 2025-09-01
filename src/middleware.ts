@@ -159,6 +159,8 @@ const isPublicRoute = createRouteMatcher([
   // oauth
   '/oidc/handoff',
   '/oidc/token',
+  "/_next/static/(.*)",    // Next statikleri
+  "/images/(.*)"
 ]);
 
 const isProtectedRoute = createRouteMatcher([
