@@ -366,8 +366,6 @@ class ChatService {
       ? 'responses'
       : undefined;
 
-    // Get the chat config (diğer parametreler için gerekiyor)
-    const _chatConfig = agentChatConfigSelectors.currentChatConfig(getAgentStoreState());
 
     const payload = merge(
       {
