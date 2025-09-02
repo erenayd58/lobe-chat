@@ -4,7 +4,7 @@
 
 export const LOBE_CHAT_CLOUD = 'LobeChat Cloud';
 
-export const BRANDING_NAME = 'Merih';
+export const BRANDING_NAME = 'Merih Asistan';
 export const BRANDING_LOGO_URL = '/icons/merih-logo.png';
 
 export const ORG_NAME = 'Merih Asistan';
